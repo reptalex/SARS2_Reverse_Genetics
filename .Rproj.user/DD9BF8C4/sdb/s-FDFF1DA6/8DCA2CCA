@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "library(ape)\nlibrary(data.table)\nlibrary(ggplot2)\nlibrary(magrittr)\nlibrary(rentrez)\nlibrary(DECIPHER)\nlibrary(muscle)\nlibrary(msa)\nlibrary(seqinr)\nlibrary(ggtree)\nlibrary(xlsx)\nsource('scripts/utils.R')\ntheme_set(theme_bw(base_size=15))\nload('data/spike_alignment_workspace2.Rd')\n\n\n# mapping tree tip-labels to accession numbers ----------------------------\n\nCoV_Legend$Accession <- CoV_Legend$NCBI %>% strsplit('\\\\.') %>% sapply(getElement,1) %>% gsub(\"\\\\'\",'',.) %>% gsub(' ','_',.)\n\nBsaI <- lapply(CoV_Legend$Accession,digest_genome,enzymes='BsaI',fragments=FALSE) %>% rbindlist\nBsmBI <- lapply(CoV_Legend$Accession,digest_genome,enzymes='BsmBI',fragments=FALSE) %>% rbindlist\n\nBsSites <- rbind(BsaI,BsmBI)\nBsSites[,rel_position:=position/genome_length]\n\ncv=CoV_Legend\nsetkey(cv,Accession)\nsetkey(BsSites,Accession)\nBsSites=BsSites[cv[,c('Accession','tip.label')]]\n\n\n\n\nBsSites[,tip.label:=factor(tip.label,levels=tree$tip.label)]\n\nggplot(BsSites,aes(tip.label,rel_position))+\n  geom_point(aes(color=Restriction_Enzyme),cex=2)+\n  geom_vline(xintercept = as.numeric(BsSites[grepl('SARS2',tip.label),tip.label]),color='red')+\n  coord_flip()+\n  ggtitle('BsaI/BsmBI Sites: all CoVs')\nggsave('figures/BsaI_BsmBI_sites_all_CoVs.png',height=11,width=8,units='in')\n",
+    "created" : 1664650401479.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1090508255",
+    "id" : "8DCA2CCA",
+    "lastKnownWriteTime" : 1664660830,
+    "last_content_update" : 1664660831470,
+    "path" : "~/COVID/Origins/RestrictionSites/SARS2_Reverse_Genetics/scripts/CoV_phylogenetic_analyses.R",
+    "project_path" : "scripts/CoV_phylogenetic_analyses.R",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
