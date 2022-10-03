@@ -75,7 +75,11 @@ digest_genome <- function(accn,enzymes=c('BsaI','BsmBI'),
                    'Restriction_Enzyme'=paste(enzymes,collapse=' + '),
                    'genome_length'=nchar(SEQ))
     if (max_fragment){
-      dum <- dum[which.max(fragment_lengths)]
+      dum <- dum[,list(Accession=accn[1],
+                       max_fragment_length=max(fragment_lengths),
+                       no_fragments=.N,
+                       Restriction_Enzyme=Restriction_Enzyme[1],
+                       genome_length=genome_length[1])]
     }
   } else {
     d_both=DigestDNA(res,
