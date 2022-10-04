@@ -65,49 +65,49 @@ re_prs=re_pairs[ix]
 
 # Repeat for all restriction enzymes x CoVs ---------------------------------
 
-all_re_Fragments=NULL
-for (i in 1:nrow(seqs)){
-  filepath=paste0('data/fasta_files/gene_',seqs$gene[i],
-                  '_accn_',seqs$accession[i],'.fasta')
-  SEQ=read.FASTA(filepath) %>%
-    as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
-  
-  for (re in names(RESTRICTION_ENZYMES)){
-    re_site=RESTRICTION_ENZYMES[re]
-    d=DigestDNA(re_site,
-                     SEQ,
-                     type='fragments',
-                     strand='top')
-    dd=unlist(d)
-    
-    dum=data.table('gene'=seqs$gene[i],'accession'=seqs$accession[i],
-                   'fragment_lengths'=dd@ranges@width,
-                   'Restriction_Enzyme'=re,
-                   'genome_length'=nchar(SEQ))
-    all_re_Fragments=rbind(all_re_Fragments,dum)
-  }
-  
-  for (j in 1:nrow(re_prs)){
-    re_1=RESTRICTION_ENZYMES[re_prs[j,a]]
-    re_2=RESTRICTION_ENZYMES[re_prs[j,b]]
-    d=DigestDNA(c(re_1,re_2),
-                SEQ,
-                type='fragments',
-                strand='top')
-    dd=unlist(d)
-    
-    dum=data.table('gene'=seqs$gene[i],'accession'=seqs$accession[i],
-                   'fragment_lengths'=dd@ranges@width,
-                   'Restriction_Enzyme'=paste0(re_1,' + ',re_2),
-                   'genome_length'=nchar(SEQ))
-    all_re_Fragments=rbind(all_re_Fragments,dum)
-  }
-  
-}
+# all_re_Fragments=NULL
+# for (i in 1:nrow(seqs)){
+#   filepath=paste0('data/fasta_files/gene_',seqs$gene[i],
+#                   '_accn_',seqs$accession[i],'.fasta')
+#   SEQ=read.FASTA(filepath) %>%
+#     as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
+#   
+#   for (re in names(RESTRICTION_ENZYMES)){
+#     re_site=RESTRICTION_ENZYMES[re]
+#     d=DigestDNA(re_site,
+#                      SEQ,
+#                      type='fragments',
+#                      strand='top')
+#     dd=unlist(d)
+#     
+#     dum=data.table('gene'=seqs$gene[i],'accession'=seqs$accession[i],
+#                    'fragment_lengths'=dd@ranges@width,
+#                    'Restriction_Enzyme'=re,
+#                    'genome_length'=nchar(SEQ))
+#     all_re_Fragments=rbind(all_re_Fragments,dum)
+#   }
+#   
+#   for (j in 1:nrow(re_prs)){
+#     re_1=RESTRICTION_ENZYMES[re_prs[j,a]]
+#     re_2=RESTRICTION_ENZYMES[re_prs[j,b]]
+#     d=DigestDNA(c(re_1,re_2),
+#                 SEQ,
+#                 type='fragments',
+#                 strand='top')
+#     dd=unlist(d)
+#     
+#     dum=data.table('gene'=seqs$gene[i],'accession'=seqs$accession[i],
+#                    'fragment_lengths'=dd@ranges@width,
+#                    'Restriction_Enzyme'=paste0(re_1,' + ',re_2),
+#                    'genome_length'=nchar(SEQ))
+#     all_re_Fragments=rbind(all_re_Fragments,dum)
+#   }
+#   
+# }
+# 
+# write.csv(all_re_Fragments,'data/coronavirus_all_re_fragments.csv')
+all_re_Fragments <- fread('data/coronavirus_all_re_fragments.csv')
 
-write.csv(all_re_Fragments,'data/coronavirus_all_re_fragments.csv')
-
-all_max_frags[gene=='SARS2' & no_fragments>=5 & no_fragments<=7][order(max_fragment_length)]
 
 # plotting ----------------------------------------------------------------
 max_frags=Fragments[,list(max_fragment_length=max(fragment_lengths)/unique(genome_length),
@@ -165,9 +165,6 @@ g_recomb=ggplot(all_max_frags[no_fragments<=30 & gene!='SARS2'],aes(factor(no_fr
   ggtitle('SARS-CoV-2 + Known Reverse-Engineering Viruses')+
   theme(legend.position=c(0.6,0.7))
 
-
-# ggarrange(g_null,g_Sars2,g_recomb,ncol=3)
-
 g_recomb
 
 S=rbind(all_max_frags[,c('gene','Restriction_Enzyme','max_fragment_length','no_fragments')],
@@ -219,6 +216,23 @@ g_z=ggplot(X,aes(rank,z))+
 
 ggarrange(g_recomb,g_z,nrow=2,labels = c('A','B'))
 ggsave('figures/Restriction_fragment_max_length_analysis.png',height=11,width=14)
+
+
+# Combining with tree -----------------------------------------------------
+
+load('data/CoV_phylo_analysis_workspace.Rds')
+
+ggarrange(
+ggarrange(gtr_bcovs+
+            theme(plot.margin = unit(c(8,30,85,20),'pt')),
+          g_bcovs2+
+            theme(plot.margin= unit(c(0,10,0,0),'pt')),labels=c('A',NA)),
+ggarrange(g_recomb+
+            theme(legend.position=c(0.45,.8)),
+          g_z,nrow=2,labels = c('B','C'))
+)
+
+ggsave('figures/BsaI_BsmBI_map_and_LLS.png',height=12,width=20)
 
 # saving ------------------------------------------------------------------
 
