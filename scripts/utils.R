@@ -1,6 +1,7 @@
 library(rentrez)
 library(magrittr)
 library(data.table)
+library(parallel)
 
 #ATG
 #TAG TAA TGA
@@ -58,7 +59,7 @@ cov_digestion <- function(accn,enzymes=c('BsaI','BsmBI'),tip=NULL){
   data("RESTRICTION_ENZYMES")
   res=sapply(enzymes,FUN=function(r,x) r[x],r=RESTRICTION_ENZYMES)
   
-  filepath=filepath=paste0('data/fasta_files/genome_accn_',accn,'[accn].fasta')
+  filepath=paste0('data/fasta_files/genome_accn_',accn,'[accn].fasta')
   SEQ=read.FASTA(filepath) %>%
     as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
   
@@ -201,4 +202,40 @@ sticky_ends <- function(re){
     }
     sapply(re,sticky_end) %>% min %>% return()
   }
+}
+
+
+md <- function(SEQ,mutations=1e3,probs=c('a'=.3,'c'=.29,'g'=.19,'t'=.32),enzymes=c('BsaI','BmsBI')){
+  sites <- sort(sample(nchar(SEQ),mutations,replace=F),decreasing = F)
+  letters <- stringr::str_sub(SEQ,sites,sites)
+  replc <- sample(c('A','T','G','C'),size = mutations,replace=T,prob = probs)
+  ix=which(replc==letters)
+  while(length(ix)>0){
+    replc[ix] <- sample(c('A','T','G','C'),size = length(ix),replace=T,prob = probs)
+    ix <- which(replc==letters)
+  }
+  sq <- SEQ
+  stringi::stri_sub_all(sq,sites,sites) <- replc
+  
+  digest_genome(SEQ=sq) %>% return()
+}
+
+mutate_digest <- function(SEQ,mutations=1e3,reps=1e4,ncores=7,
+                          probs=c('a'=.3,'c'=.29,'g'=.19,'t'=.32),
+                          enzymes=c('BsaI','BsmBI')){
+  
+  rep <- 1:reps
+  cl <- parallel::makeCluster(ncores)
+  clusterEvalQ(cl,library(DECIPHER))
+  clusterEvalQ(cl,library(data.table))
+  clusterEvalQ(cl,library(magrittr))
+  clusterExport(cl,varlist=c('digest_genome','md'))
+  
+  RES=parLapply(cl,rep,fun=function(x,SEQ,mutations,probs,enzymes) md(SEQ,mutations,probs,enzymes),
+         SEQ=SEQ,mutations=mutations,probs=probs,enzymes=enzymes) %>% rbindlist
+  
+  stopCluster(cl)
+  rm('cl')
+  RES[,rep:=1:.N]
+  return(RES)
 }
