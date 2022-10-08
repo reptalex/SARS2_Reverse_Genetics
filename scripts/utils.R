@@ -53,15 +53,39 @@ referenceSeqs <- function(db='gene',gene='S',retmax=200){
   return(refSeqs)
 }
 
-digest_genome <- function(accn,enzymes=c('BsaI','BsmBI'),
-                          fragments=TRUE,max_fragment=TRUE){
+cov_digestion <- function(accn,enzymes=c('BsaI','BsmBI'),tip=NULL){
+
+  data("RESTRICTION_ENZYMES")
+  res=sapply(enzymes,FUN=function(r,x) r[x],r=RESTRICTION_ENZYMES)
+  
+  filepath=filepath=paste0('data/fasta_files/genome_accn_',accn,'[accn].fasta')
+  SEQ=read.FASTA(filepath) %>%
+    as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
+  
+  d_both=DigestDNA(res,
+                   SEQ,
+                   type='fragments',
+                   strand='top')
+  dd=unlist(d_both)
+  
+  dum=data.table('tip.label'=tip,'accession'=accn,
+                 'fragment_lengths'=dd@ranges@width,
+                 'Restriction_Enzyme'=paste(res,collapse=' + '),
+                 'genome_length'=nchar(SEQ))
+  return(dum)
+}
+
+digest_genome <- function(accn=NULL,enzymes=c('BsaI','BsmBI'),
+                          fragments=TRUE,max_fragment=TRUE,SEQ=NULL){
   
   data("RESTRICTION_ENZYMES")
   res=sapply(enzymes,FUN=function(r,x) r[x],r=RESTRICTION_ENZYMES)
   
   filepath=paste0('data/fasta_files/genome_accn_',accn,'[accn].fasta')
-  SEQ=read.FASTA(filepath) %>%
-    as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
+  if (is.null(SEQ)){
+    SEQ=read.FASTA(filepath) %>%
+      as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
+  }
   
   if (fragments){
     d_both=DigestDNA(res,
@@ -97,4 +121,84 @@ digest_genome <- function(accn,enzymes=c('BsaI','BsmBI'),
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+get_genome <- function(accn){
+  accs <- rentrez::entrez_search('nucleotide',
+                                 term=accn)
+  if (length(accs$ids)!=0){
+    rentrez::entrez_search('genome',
+                           term=accn)
+    genome=entrez_fetch(db="nucleotide", id=accs$ids, rettype="fasta")
+    write(genome,file=paste0('data/fasta_files/genome_accn_',accn,'.fasta'))
+    genome <-read.FASTA(paste0('data/fasta_files/genome_accn_',accn,'.fasta')) %>%
+      as.character %>% lapply(.,paste0,collapse="") %>% unlist %>% DNAStringSet
+  } else {
+    genome=NULL
+    warning(paste0('Accession ',accn,' not found'))
+  }
+  return(genome)
+}
+mut <- function(seq,loc,base){
+  Biostrings::subseq(seq,loc,loc) <- base
+  return(seq)
+}
+
+muts <- function(seq,locs,bases){
+  if (length(locs)!=length(bases)){
+    stop('locs and bases must be same length')
+  }
+  for (i in 1:length(locs)){
+    seq <- mut(seq,locs[i],bases[i])
+  }
+  return(seq)
+}
+
+plot_map <- function(enzymes=c('BsaI','BsmBI'),highlight=NULL,
+                      CoV_Legend.=CoV_Legend,
+                      tree.=tree){
+  
+  BglI <- lapply(CoV_Legend$Accession,digest_genome,
+                 enzymes=enzymes,fragments=FALSE) %>% rbindlist
+  
+  BglI[,rel_position:=position/genome_length]
+  
+  cv=CoV_Legend
+  setkey(cv,Accession)
+  setkey(BglI,Accession)
+  BglI=BglI[cv[,c('Accession','tip.label')]]
+  
+  BglI[,tip.label:=factor(tip.label,levels=tree$tip.label)]
+  
+  ggplot(BglI,aes(tip.label,rel_position))+
+    geom_point(color='grey',cex=2)+
+    geom_point(data=BglI[tip.label==highlight],color='green',cex=4)+
+    coord_flip()+
+    ggtitle(paste0(enzymes,' Sites'))+
+    scale_color_manual(values=c(rep('black',4),'darkgrey'))+
+    scale_fill_manual(values=c(cls,'red',NA))+
+    scale_shape_manual(values=c(21,21,21,21,16))+
+    geom_hline(yintercept = BglI[tip.label==highlight]$rel_position,lty=2)+
+    scale_size_manual(values=c(4,4,4,4,2)) %>%
+    return
+}
+
+sticky_end <- function(re){
+  strsplit(re,'\\(')[[1]][2] %>%
+    strsplit('\\)') %>% getElement(1) %>%
+    strsplit('/') %>% unlist %>% as.numeric %>%
+    diff %>% abs %>% return()
+}
+sticky_ends <- function(re){
+  if (!grepl('\\(',re)){
+    return(0)
+  } else {
+    if (grepl(' ',re)){ ## double digestion
+      re <- strsplit(re,' + ')[[1]][c(1,3)] ## get both re's
+      if(!all(grepl('/',re))){  ##only one RE is type IIs
+        return(0)
+      }
+    }
+    sapply(re,sticky_end) %>% min %>% return()
+  }
 }

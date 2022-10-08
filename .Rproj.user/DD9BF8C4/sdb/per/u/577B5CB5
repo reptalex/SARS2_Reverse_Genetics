@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(ape)\nlibrary(picante)\nlibrary(data.table)\nlibrary(ggplot2)\nlibrary(magrittr)\nlibrary(rentrez)\nlibrary(DECIPHER)\nlibrary(patchwork)\nlibrary(ggpubr)\nlibrary(muscle)\nlibrary(msa)\nlibrary(seqinr)\nlibrary(ggtree)\nlibrary(xlsx)\nlibrary(phytools)\nsource('scripts/utils.R')\ntheme_set(theme_bw(base_size=15))\nload('data/spike_alignment_workspace2.Rd')\n\n\nPciI <- plot_map('PciI',highlight='HKU1')\nBsaHI <- plot_map('BsaHI',highlight='WIV1')\nEciI <- plot_map('EciI',highlight = 'MHV-A59-2')\n\nggarrange(PciI,BsaHI,EciI,ncol=3)\n\nggsave('~/COVID/Origins/RestrictionSites/figures/other_evenly_spaced_6_fragment_covs.png',\n       height=10,width=20)\n",
+    "created" : 1664894057961.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "385821081",
+    "id" : "577B5CB5",
+    "lastKnownWriteTime" : 31244173394051171,
+    "last_content_update" : 1665077732024,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

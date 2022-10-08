@@ -1,0 +1,9 @@
+{
+    "path" : "~/COVID/Origins/RestrictionSites/SARS2_Reverse_Genetics",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}
