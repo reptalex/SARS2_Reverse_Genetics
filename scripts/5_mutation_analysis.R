@@ -79,14 +79,16 @@ RES$virus <- c('SARS-CoV-2','RaTG13','BANAL52')
 probs=base.freq(X)
 
 # Mutation Analysis -------------------------------------------------------
+### Takes a long time
+# MUT_RaTG13 <- mutate_digest(RaTG13,mutations=Dists[1],reps=1e5,ncores = 7)
+# MUT_RaTG13$virus <- 'RaTG13'
+# MUT_RaTG13[,max_fragment_length:=max_fragment_length/genome_length]
+# MUT_BANAL52 <- mutate_digest(BANAL52,mutations=Dists[2],reps=1e5,ncores = 7)
+# MUT_BANAL52$virus <- 'BANAL52'
+# MUT_BANAL52[,max_fragment_length:=max_fragment_length/genome_length]
+# save(list=ls(),file='data/mutation_analysis_workspace.Rds')
 
-MUT_RaTG13 <- mutate_digest(RaTG13,mutations=Dists[1],reps=1e5,ncores = 7)
-MUT_RaTG13$virus <- 'RaTG13'
-MUT_RaTG13[,max_fragment_length:=max_fragment_length/genome_length]
-MUT_BANAL52 <- mutate_digest(BANAL52,mutations=Dists[2],reps=1e5,ncores = 7)
-MUT_BANAL52$virus <- 'BANAL52'
-MUT_BANAL52[,max_fragment_length:=max_fragment_length/genome_length]
-save(list=ls(),file='data/mutation_analysis_workspace.Rds')
+load('data/mutation_analysis_workspace.Rds')
 
 # Plotting ----------------------------------------------------------------
 load('data/restriction_digest_workspace.Rds')
@@ -135,7 +137,7 @@ Y=Y[yy[,c('virus','initial_z')]]
 Y[,dz:=z-initial_z]
 
 dum<- data.table('virus'=c('RaTG13','BANAL52'))
-dum$dz <- yy[match(dum$virus,virus)]$z-yy[virus=='SARS-CoV-2',z]
+dum$dz <- yy[match(dum$virus,virus)]$z-yy[virus=='SARS-CoV-2']$initial_z
 
 g_dz=ggplot(Y[virus!='SARS-CoV-2'],aes(dz))+
   geom_histogram(aes(fill=virus),position='identity')+
@@ -160,7 +162,20 @@ pvals=Y[virus!='SARS-CoV-2',list(P=sum(no_fragments>=5 & no_fragments<=7 & z>=sa
 # 2:  RaTG13 0.01154
 
 
-# all_max_frags[,sticky_end_length:=sticky_ends(Restriction_Enzyme),by=Restriction_Enzyme]
+all_max_frags[,sticky_end_length:=sticky_ends(Restriction_Enzyme),by=Restriction_Enzyme]
+
+### How many CoVs can be made as infectious clones?
+
+all_max_frags[,z:=(mean(max_fragment_length)-max_fragment_length)/sd(max_fragment_length),by=no_fragments]
+
+all_max_frags[sticky_end_length>=3 & no_fragments>=5 & no_fragments<=7][order(z,decreasing = T)][1:5]
+#        tip.label Restriction_Enzyme max_fragment_length no_fragments genome_length sticky_end_length        z
+# 1: Bat-Alpha-CoV        GGTCTC(1/5)           0.2961106            5         28128                 4 1.403368
+# 2:  Bat-CoV-unid      GCGATG(10/14)           0.2716825            6         28975                 4 1.373955
+# 3:         HKU17        GGTCTC(1/5)           0.2369743            7         26083                 4 1.364690
+# 4:     HKU12-600      GCGATG(10/14)           0.3134945            5         26396                 4 1.272347
+# 5:          HKU8      GCGATG(10/14)           0.2872832            6         28773                 4 1.237337
+
 # 
 # g_hist <- all_max_frags[sticky_end_length>=3 & !grepl('SARS2',tip.label) & (no_fragments<5 | no_fragments>7)] %>%
 #   ggplot(aes(no_fragments))+
