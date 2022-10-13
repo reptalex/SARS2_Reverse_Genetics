@@ -57,7 +57,7 @@ re_prs=re_pairs[ix]
 # }
 # 
 # write.csv(all_re_Fragments,'data/coronavirus_all_re_fragments.csv')
-all_re_Fragments <- fread('data/coronavirus_all_re_fragments.csv')
+all_re_Fragments <- fread('data/coronavirus_all_re_fragments.csv')[,2:6]
 
 
 # Max Fragment Lengths ----------------------------------------------------------------
@@ -68,32 +68,38 @@ all_max_frags=all_re_Fragments[,list(max_fragment_length=max(fragment_lengths)/u
                                      no_fragments=.N,
                                      genome_length=unique(genome_length)),by=c('tip.label','Restriction_Enzyme')]
 
-CoV_sequences <- data.table('species'=c('SL-CoV-rWIV1','rSARS-CoV Urban','rMERS-CoV',
-                                        'rBat-SCov','rSARS-CoV Becker','pBAC-SARS-CoVFL'),
-                            'no_fragments'=c(8,6,7,7,6,7),
-                            'max_fragment_length'=c(5450,6853,5717,
-                                                    6854,6854,7640)/3e4)
+
+Engineered_CoVs <- read.csv('data/CoV Infectious Clones.csv') %>% as.data.table
+Engineered_CoVs[,species:=rVirus]
+Engineered_CoVs[,max_fragment_length:=max_fragment_length/genome_length]
 
 # Plotting ----------------------------------------------------------------
-spp=CoV_sequences$species
-CoV_sequences[,`Engineered CoV`:=factor(species,levels=spp)]
-cls <- gg_color_hue(nrow(CoV_sequences))
+spp=Engineered_CoVs$species
+Engineered_CoVs[,`Engineered CoV`:=factor(species,levels=spp)]
+cls <- gg_color_hue(nrow(Engineered_CoVs))
 
+ideal <- data.table('no_fragments'=seq(4.4,8.6,length.out=100))[,max_fragment_length:=1/no_fragments]
 
 ##### L(n) plot with engineered CoVs overlaid
-g_recomb=ggplot(all_max_frags[no_fragments<=30 & !grepl('SARS2',tip.label)],aes(factor(no_fragments),max_fragment_length))+
-  geom_boxplot(lwd=2,col='darkgrey')+
-  # geom_jitter(alpha=0.07)+
+g_recomb=ggplot(all_max_frags[no_fragments<=30 & !grepl('SARS2',tip.label)],aes(no_fragments,max_fragment_length))+
+  geom_boxplot(aes(x=factor(no_fragments)),lwd=2,col='darkgrey')+
+  # geom_jitter(alpha=0.07)+  ### makes plot too busy
   scale_x_discrete('Number of Fragments')+
   scale_y_continuous(name='Length of Longest Fragment')+
   geom_point(data=max_frags[tip.label=='SARS2-WHu1'],color='red',cex=7,pch=18)+
   annotate(geom='segment',x=21.8,xend=6,y=.57,yend=.254,color='red',lwd=1.5)+
   annotate(geom='text',x=24.5,y=.6,label='SARS-CoV-2',color='red',size=12)+
-  geom_jitter(data=CoV_sequences,aes(color=`Engineered CoV`),cex=5,pch=18)+
+  geom_jitter(data=Engineered_CoVs,aes(color=`Engineered CoV`),cex=5,pch=18)+
   scale_color_manual(values=cls)+
   ggtitle('SARS-CoV-2 + Known Reverse-Engineering Viruses')+
-  theme(legend.position=c(0.6,0.8))
-
+  theme(legend.position=c(0.6,0.8))+
+  geom_line(data=ideal,col='darkred',lwd=1.5)+
+  annotate(geom='segment',x=4.4,xend=4.4,y=1/4.4,yend=9/30,lwd=1.5,col='darkred')+
+  annotate(geom='segment',x=8.6,xend=8.6,y=1/8.6,yend=9/30,lwd=1.5,col='darkred')+
+  annotate(geom='segment',x=4.4,xend=8.6,y=9/30,yend=9/30,lwd=1.5,col='darkred')+
+  geom_point(data=max_frags[tip.label=='SARS2-WHu1'],color='red',cex=7,pch=18)
+  
+  
 g_recomb
 
 ########## z-scores
@@ -112,8 +118,8 @@ s=S[no_fragments>=5 & no_fragments<=8,list(mu=mean(max_fragment_length,na.rm=T),
 
 
 setkey(s,no_fragments)
-setkey(CoV_sequences,no_fragments)
-CoVs=s[CoV_sequences]  ### This has z-scores for engineered CoVs
+setkey(Engineered_CoVs,no_fragments)
+CoVs=s[Engineered_CoVs]  ### This has z-scores for engineered CoVs
 
 CoVs[,z:=(mu-max_fragment_length)/sd]
 
@@ -155,6 +161,76 @@ ggsave('figures/Restriction_fragment_max_length_analysis.png',height=11,width=14
 save(list=ls(),file='data/restriction_digest_workspace.Rds')
 save(list=c('g_recomb','g_z'),file='data/restriction_digest_Ln_z_plots.Rds')
 
+
+# type IIs analysis -------------------------------------------------------
+Type2Res <- c('BbsI','BfuAI','BspQI','PaqCI','SapI','BsaI','BsmBI','BglI')
+Type2Res <- Type2Res[(Type2Res %in% names(RESTRICTION_ENZYMES))]
+nrs=length(Type2Res)
+
+### index table with all unique pairs (i,j) of type IIs restriction enzymes
+ixs <- data.table('i'=rep(1:(nrs-1),times=c((nrs-1):1)))
+ixs[,j:=(i+1):nrs,by=i]
+re2s <- data.table('a'=Type2Res[ixs$i],'b'=Type2Res[ixs$j])
+
+frags_2s=NULL
+for (i in 1:n){
+  for (re in Type2Res){
+    frag=cov_digestion(accns[i],re,tips[i])
+    frag$Restriction_Enzyme <- re
+    frags_2s=rbind(frags_2s,frag)
+  }
+  for (j in 1:nrow(re2s)){
+    enzymes <- as.character(c(re2s$a[j],re2s$b[j]))
+    frag=cov_digestion(accns[i],enzymes,tips[i])
+    frag$Restriction_Enzyme <- paste(enzymes,collapse=' + ')
+    frags_2s=rbind(frags_2s,frag)
+  }
+}
+
+frags_2s <- frags_2s[,list(max_fragment_length=max(fragment_lengths)/genome_length[1],
+                           no_fragments=.N,
+                           genome_length=genome_length[1],
+                           accession=accession[1]),by=c('tip.label','Restriction_Enzyme')]
+
+
+rgs_specs <- S[no_fragments>=5 & no_fragments<=7,list(mu=mean(max_fragment_length,na.rm=T),
+                                                      sd=sd(max_fragment_length,na.rm=T)),by=no_fragments]
+
+setkey(frags_2s,no_fragments)
+setkey(rgs_specs,no_fragments)
+frags_2s <- rgs_specs[frags_2s]
+
+frags_2s <- frags_2s[!tip.label=='SARS2-WIV04']  ## don't double-count SARS2
+
+frags_2s[,z:=(mu-max_fragment_length)/sd]
+
+frags_2s[,.N]
+## 1491 total
+frags_2s[which.max(z)]
+
+#    no_fragments        mu       sd  tip.label Restriction_Enzyme max_fragment_length genome_length accession        z
+# 1:            6 0.4284022 0.114201 SARS2-WHu1       BsaI + BsmBI           0.2534194         29903 NC_045512 1.532236
+
+
+### 1491 total type IIs digestions, SARS-CoV-2 has maximum z-score of all.
+frags_2s[,species:=tip.label]
+
+Z <- rbind(frags_2s)
+
+frags_2s <- frags_2s[order(z,decreasing = T)]
+frags_2s[,rank:=1:.N]
+
+
+g_2s <- ggplot(frags_2s[!is.na(z)],aes(rank,z))+
+  geom_bar(stat='identity',fill='darkgrey',col='darkgrey',width=0.1)+
+  geom_point(color='darkgrey')+
+  geom_point(data=frags_2s[!is.na(z) & grepl('SARS2',tip.label) & Restriction_Enzyme=='BsaI + BsmBI'],cex=4,color='red')+
+  geom_bar(data=frags_2s[!is.na(z) & grepl('SARS2',tip.label) & Restriction_Enzyme=='BsaI + BsmBI'],stat='identity',
+           fill='red',color='red')+
+  ggtitle('All CoVs type IIs digestions generating 5-7 fragments')+
+  geom_hline(yintercept=0)
+
+save(list=c('g_recomb','g_z','g_2s'),file='data/restriction_digest_plots.Rds')
 
 
 # Testing -----------------------------------------------------------------

@@ -39,6 +39,7 @@ g_bs=ggplot(BsSites,aes(tip.label,rel_position))+
   geom_hline(yintercept = as.numeric(BsSites[grepl('SARS2',tip.label),rel_position]),lty=2)+
   geom_vline(xintercept = as.numeric(BsSites[grepl('SARS2',tip.label),tip.label]),color='red')+
   coord_flip()+
+  scale_y_continuous('Genome Position')+
   ggtitle('BsaI/BsmBI Sites: all CoVs')
 g_bs
 ggsave('figures/BsaI_BsmBI_sites_all_CoVs.png',height=11,width=8,units='in')
@@ -54,6 +55,7 @@ g_bcovs=ggplot(bs_bcovs,aes(tip.label,rel_position))+
   geom_vline(xintercept = c(38,39),color='red')+
   geom_hline(yintercept=bs_bcovs[grepl("SARS2",tip.label)]$rel_position,lty=2)+
   coord_flip()+
+  scale_y_continuous('Genome Position')+
   ggtitle('BsaI/BsmBI Sites: BetaCoVs')
 g_bcovs
 ggsave('figures/BsaI_BsmBI_sites_BetaCoVs.png',height=8,width=8,units='in')
@@ -78,6 +80,7 @@ g_bcovs2=ggplot(bs_bcovs,aes(tip,rel_position))+
   coord_flip()+
   scale_x_discrete(NULL,labels=NULL)+
   ggtitle('BsaI/BsmBI Sites: BetaCoVs')+
+  scale_y_continuous('Genome Position')+
   theme(legend.position='bottom')
 ggarrange(gtr_bcovs+
             theme(plot.margin = unit(c(8,-130,85,20),'pt')),
@@ -91,15 +94,16 @@ load('data/restriction_digest_Ln_z_plots.Rds')
 
 ggarrange(
   ggarrange(gtr_bcovs+
-              theme(plot.margin = unit(c(8,30,85,20),'pt')),
+              theme(plot.margin = unit(c(10,0,85,20),'pt')),
             g_bcovs2+
               theme(plot.margin= unit(c(0,10,0,0),'pt')),labels=c('A',NA)),
   ggarrange(g_recomb+
-              theme(legend.position=c(0.45,.8)),
+              theme(legend.position=c(0.5,.8))+
+              guides(colour = guide_legend(ncol = 2)),
             g_z,nrow=2,labels = c('B','C'))
 )
 
-ggsave('figures/BsaI_BsmBI_map_and_LLS.png',height=12,width=20)
+ggsave('figures/BsaI_BsmBI_map_and_LLS.png',height=12,width=23)
 
 # BglI --------------------------------------------------------------------
 

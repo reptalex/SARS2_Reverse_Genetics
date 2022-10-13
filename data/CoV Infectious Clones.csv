@@ -1,0 +1,11 @@
+Year,Virus,rVirus,Enzymes,no_fragments,max_fragment_length,Accession,genome_length,link,comments
+2008,HCoV-NL63,iHCoV-NL63,BsmBI + BsAPI,5,6907,FJ211861,27709,Systematic Assembly of a Full-Length Infectious Clone of Human Coronavirus NL63 | Journal of Virology (asm.org),
+2008,MHV-A59,iMHV-A59,BglI + BsmBI,7,8711,NC_001846,31357,Systematic Assembly and Genetic Manipulation of the Mouse Hepatitis Virus A59 Genome | SpringerLink,No See'ms used for mutations (not assembly)
+2006,SARS-CoV Urbani,pBAC-SARS-CoV,ClaI+MluI+PmeI+BamHI+NheI,5,7640,AY278741,29727,Construction of a Severe Acute Respiratory Syndrome Coronavirus Infectious cDNA Clone and a Replicon To Study Coronavirus RNA Synthesis (asm.org),From review: https://www.sciencedirect.com/science/article/pii/S0168170214003827
+2000,TGEV,iTGEV,BglI+BstXI,5,6900,HM776941,28580,Strategy for Systematic Assembly of Large RNA and DNA Genomes: Transmissible Gastroenteritis Virus Model (asm.org),From review: https://www.sciencedirect.com/science/article/pii/S0168170214003827
+2003,SARS-CoV Urbani,iSARS-Urbani,BglI,6,6851,AY278741,29727,pnas.1735582100.pdf (amazonaws.com),From review: https://www.sciencedirect.com/science/article/pii/S0168170214003827
+2018,PEDVPT-P96,iPEDVPT-P96,?,6,7806,KY929406,28038,Viruses | Free Full-Text | The Characterization of Immunoprotection Induced by a cDNA Clone Derived from the Attenuated Taiwan Porcine Epidemic Diarrhea Virus Pintung 52 Strain | HTML (mdpi.com),
+2008,Bat-SCoV,iBat-SCoV,?,7,6854,FJ211859,29750,https://www.pnas.org/doi/full/10.1073/pnas.0808116105,From review: https://onlinelibrary.wiley.com/doi/full/10.1111/pbi.13084
+2008,SARS-CoV,iSARS-CoV,?,6,6854,FJ211859,29750,https://www.pnas.org/doi/full/10.1073/pnas.0808116105,From review: https://onlinelibrary.wiley.com/doi/full/10.1111/pbi.13084
+2013,MERS-CoV,iMERS-CoV,BglI,7,5801,JX869059,30199,https://www.pnas.org/doi/full/10.1073/pnas.1311542110,From review: https://www.sciencedirect.com/science/article/pii/S0168170214003827#bib0375
+2016,WIV1,iWIV1,BglI,8,5451,KF367457,30309,"Bat Severe Acute Respiratory Syndrome-Like Coronavirus WIV1 Encodes an Extra Accessory Protein, ORFX, Involved in Modulation of the Host Immune Response | Journal of Virology (asm.org)",

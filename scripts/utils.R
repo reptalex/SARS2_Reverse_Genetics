@@ -75,6 +75,18 @@ cov_digestion <- function(accn,enzymes=c('BsaI','BsmBI'),tip=NULL){
                  'genome_length'=nchar(SEQ))
   return(dum)
 }
+### these are used for SEQ from muscle alignment
+bsai_sites <- function(SEQ,Virus='a'){
+  rbind(data.table('Virus'=Virus,"position"=gregexpr('GAGACC',SEQ)[[1]],'enzyme'='BsaI'),
+        data.table('Virus'=Virus,"position"=gregexpr('GGTCTC',SEQ)[[1]],'enzyme'='BsaI'))[position>0] %>% return()
+}
+bsmbi_sites <- function(SEQ,Virus='a'){
+  rbind(data.table('Virus'=Virus,"position"=gregexpr('GAGACG',SEQ)[[1]],'enzyme'='BsmBI'),
+        data.table('Virus'=Virus,"position"=gregexpr('CGTCTC',SEQ)[[1]],'enzyme'='BsmBI'))[position>0] %>% return()
+}
+##
+overhangs <- function(Seq,position) as.character(substr(Seq,position-5,position-2))
+
 
 digest_genome <- function(accn=NULL,enzymes=c('BsaI','BsmBI'),
                           fragments=TRUE,max_fragment=TRUE,SEQ=NULL){
@@ -204,6 +216,28 @@ sticky_ends <- function(re){
   }
 }
 
+classify_mutations <- function(mutations,orfs,seq,sars2){
+  M <- data.table('site'=as.numeric(rownames(mutations)))
+  M$from <- mutations[,1]
+  M$to <- mutations[,2]
+  M[,ORF:=max(which(orfs$start<site)),by=site]
+  M <- M[!is.infinite(ORF)]
+  M$ORF <- orfs$ORF[M$ORF]
+  setkey(M,ORF)
+  setkey(orfs,ORF)
+  M <- M[orfs]
+  
+  codon_loc <- mod(M$site-M$start,3)
+  
+  M$codon_start <- M$site-codon_loc
+  M$codon_stop <- M$site-codon_loc+2
+  M[!is.na(codon_start),old_codon:=as.character(substr(seq,codon_start,codon_stop)),by=site]
+  M[!is.na(codon_start),new_codon:=as.character(substr(sars2,codon_start,codon_stop)),by=site]
+  M[!is.na(codon_start) & !grepl('-',old_codon) & !grepl('-',new_codon),
+    silent:=GENETIC_CODE[[new_codon]]==GENETIC_CODE[[old_codon]],by=site]
+  return(M)
+}
+
 
 md <- function(SEQ,mutations=1e3,probs=c('a'=.3,'c'=.29,'g'=.19,'t'=.32),enzymes=c('BsaI','BmsBI')){
   sites <- sort(sample(nchar(SEQ),mutations,replace=F),decreasing = F)
@@ -239,3 +273,5 @@ mutate_digest <- function(SEQ,mutations=1e3,reps=1e4,ncores=7,
   RES[,rep:=1:.N]
   return(RES)
 }
+
+
