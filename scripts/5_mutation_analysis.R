@@ -89,7 +89,8 @@ Pos <- rbind(bsai_sites(musc@unmasked[[1]],Virus='SARS2'),
              bsai_sites(musc@unmasked[[3]],Virus='BANAL52'),
              bsmbi_sites(musc@unmasked[[3]],Virus='BANAL52'))
 # #BsaI
-# 
+#  GGTCTC    - sticky end 1:5
+
 # 'CTCTGG'   - sticky end -1:-5
 # 'GAGACC'   - this is the strand found in our genomes
 # 
@@ -131,6 +132,8 @@ M[site %in% REsites]
 # 17: 24106    t  c   S BANAL52 21485 25321       24104      24106       GAT       GAC   TRUE
 
 ## 12 silent mutations in RaTG13, 4 in BANAl52.
+
+M[!duplicated(site)][site %in% REsites]
 
 ### Fisher Test of Silent Mutations within BsaI/BsmBI sites
 ## number of nt's within BB sites

@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "SARS2\nORFs\n\nsapply(ORFs[Virus=='SARS2']$start,FUN=function(x,s) substr(s,x,x+2),s=SARS2)\nsubstr(SARS2,ORFs[Virus=='SARS2']$start,ORFs[Virus=='SARS2']$start+3)\n",
+    "created" : 1665788601059.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "1293018245",
+    "id" : "344C889D",
+    "lastKnownWriteTime" : 3419473789575321445,
+    "last_content_update" : 1665788741163,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
