@@ -66,6 +66,8 @@ BANALsites <- Mutations[[5]]$short %>% strsplit(':') %>% sapply(getElement,1) %>
 ### Classify these as S/N
 ORFs <- read.csv('data/CoV_ORFs.csv') %>% as.data.table
 colnames(ORFs)[1] <- 'Virus'
+ORFs <- adjust_orfs_to_musc(musc,ORFs) ## account for gaps to adjust ORFs
+
 
 M_rat <- classify_mutations(Mutations[[3]],ORFs[Virus=='RaTG13'],seq=musc_rat,sars2=musc_sars)
 M_ban <- classify_mutations(Mutations[[5]],ORFs[Virus=='BANAL52'],seq=musc_banal,sars2=musc_sars)
@@ -107,33 +109,33 @@ REsites=Pos[,list(tots=position+0:5),by=position]$tots %>% unique
 
 M[,list(silent_mut_rate=sum(silent,na.rm=T)/.N),by=Virus]
 #      Virus silent_mut_rate
-# 1:  RaTG13       0.7918512
-# 2: BANAL52       0.8403548
+# 1:  RaTG13       0.8334810
+# 2: BANAL52       0.8392461
 
 M[site %in% REsites]
 
 #     site from to ORF   Virus start  stop codon_start codon_stop old_codon new_codon silent
-# 1:   2197    t  c  1a  RaTG13   266 13480        2195       2197       GAT       GAC   TRUE
-# 2:   9751    a  g  1a  RaTG13   266 13480        9749       9751       AAA       AAG   TRUE
-# 3:   9754    g  a  1a  RaTG13   266 13480        9752       9754       AGG       AGA   TRUE
-# 4:  10447    a  g  1a  RaTG13   266 13480       10445      10447       AGA       AGG   TRUE
-# 5:  11650    t  c  1a  RaTG13   266 13480       11648      11650       GGT       GGC   TRUE
-# 6:  22922    c  a   S  RaTG13 21533 25369       22922      22924       CGT       AGA   TRUE
-# 7:  22924    t  a   S  RaTG13 21533 25369       22922      22924       CGT       AGA   TRUE
-# 8:  22925    c  t   S  RaTG13 21533 25369       22925      22927       CTC       TTG   TRUE
-# 9:  22927    c  g   S  RaTG13 21533 25369       22925      22927       CTC       TTG   TRUE
-# 10: 24103    g  a   S  RaTG13 21533 25369       24101      24103       AGG       AGA   TRUE
-# 11: 24106    t  c   S  RaTG13 21533 25369       24104      24106       GAT       GAC   TRUE
-# 12: 24514    c  t   S  RaTG13 21533 25369       24512      24514       CTC       CTT   TRUE
-# 13: 10447    a  g  1a BANAL52   242 13432       10445      10447       AGA       AGG   TRUE
-# 14: 11650    t  c  1a BANAL52   242 13432       11648      11650       GGT       GGC   TRUE
-# 15: 17334    a  g  1b BANAL52 13717 21504       17332      17334       ACA       ACG   TRUE
-# 16: 17976    t  c  1b BANAL52 13717 21504       17974      17976       GAT       GAC   TRUE
-# 17: 24106    t  c   S BANAL52 21485 25321       24104      24106       GAT       GAC   TRUE
+# 1:  2197    t  c  1a  RaTG13   266 13480        2195       2197       GAT       GAC   TRUE
+# 2:  9751    a  g  1a  RaTG13   266 13480        9749       9751       AAA       AAG   TRUE
+# 3:  9754    g  a  1a  RaTG13   266 13480        9752       9754       AGG       AGA   TRUE
+# 4: 10447    a  g  1a  RaTG13   266 13480       10445      10447       AGA       AGG   TRUE
+# 5: 11650    t  c  1a  RaTG13   266 13480       11648      11650       GGT       GGC   TRUE
+# 6: 22922    c  a   S  RaTG13 21536 25372       22922      22924       CGT       AGA   TRUE
+# 7: 22924    t  a   S  RaTG13 21536 25372       22922      22924       CGT       AGA   TRUE
+# 8: 22925    c  t   S  RaTG13 21536 25372       22925      22927       CTC       TTG   TRUE
+# 9: 22927    c  g   S  RaTG13 21536 25372       22925      22927       CTC       TTG   TRUE
+# 10: 24103    g  a   S  RaTG13 21536 25372       24101      24103       AGG       AGA   TRUE
+# 11: 24106    t  c   S  RaTG13 21536 25372       24104      24106       GAT       GAC   TRUE
+# 12: 24514    c  t   S  RaTG13 21536 25372       24512      24514       CTC       CTT   TRUE
+# 13: 10447    a  g  1a BANAL52   266 13456       10445      10447       AGA       AGG   TRUE
+# 14: 11650    t  c  1a BANAL52   266 13456       11648      11650       GGT       GGC   TRUE
+# 15: 17334    a  g  1b BANAL52 13768 21555       17332      17334       ACA       ACG   TRUE
+# 16: 17976    t  c  1b BANAL52 13768 21555       17974      17976       GAT       GAC   TRUE
+# 17: 24106    t  c   S BANAL52 21536 25372       24104      24106       GAT       GAC   TRUE
 
-## 12 silent mutations in RaTG13, 4 in BANAl52.
+## 12 silent mutations in RaTG13, 5 in BANAl52.
 
-M[!duplicated(site)][site %in% REsites]
+M[!duplicated(site)][site %in% REsites] ## 14 distinct mutations - all silent.9% chance of that
 
 ### Fisher Test of Silent Mutations within BsaI/BsmBI sites
 ## number of nt's within BB sites
@@ -148,13 +150,13 @@ fisher.test(A_RaTG13)
 # Fisher's Exact Test for Count Data
 # 
 # data:  A_RaTG13
-# p-value = 5.211e-08
+# p-value = 9.087e-08
 # alternative hypothesis: true odds ratio is not equal to 1
 # 95 percent confidence interval:
-#   4.472405 18.197036
+# 4.24042 17.25056
 # sample estimates:
 # odds ratio 
-#   9.365937 
+# 8.877937 
 
 BB_sites_BANAL52 <- Pos[Virus %in% c('SARS2','BANAL52'),length(unique(position))]*6 
 BB_Smuts_BANAL52 <- M[site %in% REsites & Virus=='BANAL52',.N]
@@ -168,14 +170,13 @@ fisher.test(A_BANAL52)
 # Fisher's Exact Test for Count Data
 # 
 # data:  A_BANAL52
-# p-value = 0.004082
+# p-value = 0.00406
 # alternative hypothesis: true odds ratio is not equal to 1
 # 95 percent confidence interval:
-#   1.594238 13.340336
+#   1.596406 13.358500
 # sample estimates:
 # odds ratio 
-#   5.211366 
-
+#   5.218468 
 
 
 # digestion ---------------------------------------------------------------

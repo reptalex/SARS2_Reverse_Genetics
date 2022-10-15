@@ -1,14 +1,14 @@
 {
     "collab_server" : "",
-    "contents" : "SARS2\nORFs\n\nsapply(ORFs[Virus=='SARS2']$start,FUN=function(x,s) substr(s,x,x+2),s=SARS2)\nsubstr(SARS2,ORFs[Virus=='SARS2']$start,ORFs[Virus=='SARS2']$start+3)\n",
+    "contents" : "SARS2\nORFs\n\n\n### Must check:\n\n\nORFs <- read.csv('data/CoV_ORFs.csv') %>% as.data.table\ncolnames(ORFs)[1] <- 'Virus'\n\n#(1) ORFs start codons are correct - these are most important\nsapply(ORFs[Virus=='SARS-CoV-2']$start,FUN=function(x,s) substr(s,x,x+2),s=SARS2) %>% unique\nsapply(ORFs[Virus=='RaTG13']$start,FUN=function(x,s) substr(s,x,x+2),s=RaTG13) %>% unique\nsapply(ORFs[Virus=='BANAL52']$start,FUN=function(x,s) substr(s,x,x+2),s=BANAL52) %>% unique\n\n \naORFs <- adjust_orfs_to_musc(musc,ORFs)\n\n#(1) ORFs start codons are correct\nsapply(aORFs[Virus=='SARS-CoV-2']$start,FUN=function(x,s) substr(s,x,x+2),s=musc_sars)\nsapply(aORFs[Virus=='RaTG13']$start,FUN=function(x,s) substr(s,x,x+2),s=musc_rat)\nsapply(aORFs[Virus=='BANAL52']$start,FUN=function(x,s) substr(s,x,x+2),s=musc_banal)\n\n#(2) mutation classification is correct\nmutations=Mutations[[3]]\norfs=ORFs[Virus=='SARS-CoV-2']\nseq=RaTG13\nsars2=SARS2\n\nM <- data.table('site'=as.numeric(rownames(mutations)))\nM$from <- mutations[,1]\nM$to <- mutations[,2]\nM[,ORF:=max(which(orfs$start<site)),by=site]\nM <- M[!is.infinite(ORF)]\nM$ORF <- orfs$ORF[M$ORF]\nsetkey(M,ORF)\nsetkey(orfs,ORF)\nM <- M[orfs]\n\ncodon_loc <- mod(M$site-M$start,3)\n\nM$codon_start <- M$site-codon_loc\nM$codon_stop <- M$site-codon_loc+2\nM[!is.na(codon_start),new_codon:=as.character(substr(sars2,codon_start,codon_stop)),by=site]\n\n\nM[!is.na(codon_start),old_codon:=as.character(substr(seq,codon_start,codon_stop)),by=site]\nM[!is.na(codon_start) & !grepl('-',old_codon) & !grepl('-',new_codon),\n  silent:=GENETIC_CODE[[new_codon]]==GENETIC_CODE[[old_codon]],by=site]",
     "created" : 1665788601059.000,
     "dirty" : true,
     "encoding" : "",
     "folds" : "",
-    "hash" : "1293018245",
+    "hash" : "1693695",
     "id" : "344C889D",
     "lastKnownWriteTime" : 3419473789575321445,
-    "last_content_update" : 1665788741163,
+    "last_content_update" : 1665793513041,
     "path" : null,
     "project_path" : null,
     "properties" : {

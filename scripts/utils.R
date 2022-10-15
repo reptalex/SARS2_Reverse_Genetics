@@ -216,6 +216,32 @@ sticky_ends <- function(re){
   }
 }
 
+
+
+adjust_orfs_to_musc <- function(musc,ORFs){
+  
+  ### Muscle alignment contains A---C for gaps
+  ### Have to shift each start/stop codon by number of "-" that precede them
+  
+  vs <- c('SARS-CoV-2','RaTG13','BANAL52')
+  for (i in 1:3){
+    v=vs[i]
+    orfs <- ORFs[Virus==v]
+    gaps <- gregexpr('-',musc@unmasked[[i]])[[1]] %>% setdiff(-1)
+    
+    if (length(gaps)>0){
+      n=orfs[,.N]
+      shft=rep(0,orfs[,.N])
+      for (j in 1:n){
+        shft[j] <- sum(gaps < (orfs$start[j]+sum(shft)))
+      }
+      ORFs[Virus==v]$start <- ORFs[Virus==v]$start+shft
+      ORFs[Virus==v]$stop <- ORFs[Virus==v]$stop+shft
+    }
+  }
+  return(ORFs)
+}
+
 classify_mutations <- function(mutations,orfs,seq,sars2){
   M <- data.table('site'=as.numeric(rownames(mutations)))
   M$from <- mutations[,1]

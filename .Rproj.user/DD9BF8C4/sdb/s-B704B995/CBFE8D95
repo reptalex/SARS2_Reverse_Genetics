@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(ape)\nlibrary(picante)\nlibrary(data.table)\nlibrary(ggplot2)\nlibrary(magrittr)\nlibrary(rentrez)\nlibrary(DECIPHER)\nlibrary(patchwork)\nlibrary(ggpubr)\nlibrary(muscle)\nlibrary(msa)\nlibrary(seqinr)\nlibrary(ggtree)\nlibrary(xlsx)\nlibrary(phytools)\nsource('scripts/utils.R')\ntheme_set(theme_bw(base_size=15))\nload('data/spike_alignment_workspace2.Rd')\n\n\n# mapping tree tip-labels to accession numbers ----------------------------\n\nX <- lapply(CoV_Legend$Accession,digest_genome,enzymes='AscI',fragments=FALSE) %>% rbindlist\nX[,rel_position:=position/genome_length]\n\ncv=CoV_Legend\nsetkey(cv,Accession)\nsetkey(X,Accession)\nX=X[cv[,c('Accession','tip.label')]]\n\n\nX[,tip.label:=factor(tip.label,levels=tree$tip.label)]\n\nggplot(X,aes(tip.label,rel_position))+\n  geom_point(aes(color=Restriction_Enzyme),cex=2)+\n  geom_hline(yintercept = as.numeric(X[grepl('SARS2',tip.label),rel_position]),lty=2)+\n  geom_vline(xintercept = as.numeric(X[grepl('SARS2',tip.label),tip.label]),color='red')+\n  coord_flip()+\n  scale_y_continuous('Genome Position')+\n  ggtitle('AscI Sites: all CoVs')\n",
+    "created" : 1665790572651.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "725842406",
+    "id" : "CBFE8D95",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1665790730077,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
