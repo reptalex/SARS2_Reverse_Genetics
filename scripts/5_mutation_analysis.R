@@ -82,7 +82,7 @@ ggplot(M[silent==TRUE],aes(site))+
   geom_vline(xintercept = unlist(ORFs[Virus=='SARS-CoV-2' & ORF=='S',c('start','stop')]))
 
 
-# Silent Mutations & Overhangs ------------------------------------------------
+# Overhangs ------------------------------------------------
 
 Pos <- rbind(bsai_sites(musc@unmasked[[1]],Virus='SARS2'),
              bsmbi_sites(musc@unmasked[[1]],Virus='SARS2'),
@@ -104,6 +104,12 @@ Pos[Virus=='SARS2',overhang:=overhangs(musc@unmasked[[1]],position),by=position]
 Pos[Virus=='RaTG13',overhang:=overhangs(musc@unmasked[[2]],position),by=position]
 Pos[Virus=='BANAL52',overhang:=overhangs(musc@unmasked[[3]],position),by=position]
 
+### All overhangs are unique, non-palindromic, and none contain all-GC's. What are the odds of this?
+overhang_pass_rate=viable_overhang_frequency(SARS2)
+overhang_pass_rate
+# 0.6014  ## 60% chance that 5 overhangs are unique in random 4mers with same nt freq as SARS2
+
+# Silent Mutations --------------------------------------------------------
 
 REsites=Pos[,list(tots=position+0:5),by=position]$tots %>% unique
 
@@ -134,7 +140,6 @@ M[site %in% REsites]
 # 17: 24106    t  c   S BANAL52 21536 25372       24104      24106       GAT       GAC   TRUE
 
 ## 12 silent mutations in RaTG13, 5 in BANAl52.
-
 M[!duplicated(site)][site %in% REsites] ## 14 distinct mutations - all silent.9% chance of that
 
 ### Fisher Test of Silent Mutations within BsaI/BsmBI sites

@@ -2,6 +2,7 @@ library(rentrez)
 library(magrittr)
 library(data.table)
 library(parallel)
+library(Biostrings)
 
 #ATG
 #TAG TAA TGA
@@ -86,6 +87,31 @@ bsmbi_sites <- function(SEQ,Virus='a'){
 }
 ##
 overhangs <- function(Seq,position) as.character(substr(Seq,position-5,position-2))
+
+viable_overhang_frequency <- function(Seq,reps=1e4,n=5){
+  freqs <- as.DNAbin(Seq) %>% base.freq()
+  sample_seq <- function(freqs) DNAString(paste(sample(names(freqs),size = 4,prob=freqs),collapse=''))
+  check_seq <- function(seq){
+    pndrms=length(findPalindromes(seq,min.armlength = 2))==0  #no palindromes
+    gcs=grepl('A',seq)|grepl('T',seq)                         #no gcs
+  }
+  sim_and_check_overhangs <- function(freqs,n=5){
+    seqs=sapply(1:n,FUN=function(n,f) sample_seq(f),f=freqs)
+    seq_check=sapply(seqs,check_seq)
+    seqs <- DNAStringSet(seqs)
+    if (all(seq_check)){
+      if(any(duplicated(seqs))){
+        return(FALSE)
+      } else {
+        return(TRUE)
+      }
+    } else {
+      return(FALSE)
+    }
+  }
+  tst=sapply(1:reps,FUN=function(r,n,f) sim_and_check_overhangs(f,n),f=freqs,n=n)
+  return(sum(tst)/reps)
+}
 
 
 digest_genome <- function(accn=NULL,enzymes=c('BsaI','BsmBI'),
